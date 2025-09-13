@@ -1,0 +1,321 @@
+{
+  "info": {
+    "name": "Ecommerce API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Setup: Reset Vars",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.environment.set('userId', '');",
+              "pm.environment.set('productId', '');",
+              "pm.environment.set('orderId', '');",
+              "const ts = Date.now();",
+              "pm.environment.set('uniqueName', `Ada ${ts}`);",
+              "pm.environment.set('uniqueEmail', `ada+${ts}@example.com`);",
+              "pm.test('Health OK', function () {",
+              "  pm.response.to.have.status(200);",
+              "  pm.expect(pm.response.json().status).to.eql('ok');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Health OK', function () {",
+              "  pm.response.to.have.status(200);",
+              "  pm.expect(pm.response.json().status).to.eql('ok');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Init DB",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/init-db",
+        "header": [
+          {
+            "key": "X-Init-Token",
+            "value": "{{initDbToken}}"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('DB init succeeded', function () {",
+              "  pm.response.to.have.status(200);",
+              "  pm.expect(pm.response.json().message).to.include('Database tables created');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Create User",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/users",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"{{uniqueName}}\",\n  \"email\": \"{{uniqueEmail}}\",\n  \"address\": \"London\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (!pm.environment.get('uniqueEmail')) {",
+              "  const ts = Date.now();",
+              "  pm.environment.set('uniqueName', `Ada ${ts}`);",
+              "  pm.environment.set('uniqueEmail', `ada+${ts}@example.com`);",
+              "}"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "  const user = pm.response.json();",
+              "  pm.environment.set('userId', user.id);",
+              "  pm.test('User created (201)', () => true);",
+              "} else if (pm.response.code === 409) {",
+              "  pm.test('User already exists (409)', () => true);",
+              "  pm.sendRequest(`${pm.environment.get('baseUrl')}/users?page=1&per_page=1`, (err, res) => {",
+              "    if (!err && res.code === 200) {",
+              "      const first = res.json().items && res.json().items[0];",
+              "      if (first && first.id) pm.environment.set('userId', first.id);",
+              "    }",
+              "  });",
+              "} else {",
+              "  pm.test(`Unexpected status ${pm.response.code}`, () => false);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Create Product",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/products",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"product_name\": \"Keyboard\", \"price\": 99.99}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Product created (201)', function () { pm.response.to.have.status(201); });",
+              "var prod = pm.response.json();",
+              "pm.environment.set('productId', prod.id);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Create Order",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/orders",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_id\": {{userId}},\n  \"order_date\": \"2025-09-06\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Order created (201)', () => pm.response.to.have.status(201));",
+              "const order = pm.response.json();",
+              "pm.environment.set('orderId', order.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Add Product to Order",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/orders/{{orderId}}/add_product/{{productId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Product added to order', function () {",
+              "  pm.response.to.have.status(200);",
+              "  pm.expect(pm.response.json().products.length).to.be.greaterThan(0);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Products for Order",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/orders/{{orderId}}/products"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Products for order fetched', function () {",
+              "  pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Remove Product from Order",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/orders/{{orderId}}/remove_product/{{productId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Product removed from order', function () {",
+              "  pm.response.to.have.status(200);",
+              "  pm.expect(pm.response.json().message).to.include('removed');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Order by ID",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/orders/{{orderId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Order fetched', function () {",
+              "  pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Orders for User",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/orders/user/{{userId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Orders for user fetched', function () {",
+              "  pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Delete Order",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/orders/{{orderId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Order deleted', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "pm.environment.unset('orderId');"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
