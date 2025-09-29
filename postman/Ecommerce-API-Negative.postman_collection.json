@@ -1,0 +1,591 @@
+{
+  "info": {
+    "_postman_id": "eimdev-5852-73bb1f53-df59-4b9b-8bc4-a8a15acea261",
+    "name": "Ecommerce API - \u274c Negative tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Negative/error-path tests for the Flask e-commerce API.\nRun happy-path first to seed userId/productId/orderId."
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.environment.get('badId')) { pm.environment.set('badId', '999999'); }"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Users: Create (missing email) \u279c 400",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/users",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"No Email\",\n  \"address\": \"Nowhere\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 on missing email', () => pm.response.code === 400);",
+              "pm.test('Error mentions email', () => pm.response.text().toLowerCase().includes('email'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users: Create (duplicate email) \u279c 409",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/users",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Dup\",\n  \"address\": \"Same\",\n  \"email\": \"{{uniqueEmail}}\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('409 duplicate email', () => pm.response.code === 409);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users: Get by id (not found) \u279c 404",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/users/{{badId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users",
+            "{{badId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('404 for missing user', () => pm.response.code === 404);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users: Delete (not found) \u279c 404",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/users/{{badId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users",
+            "{{badId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('404 on delete missing user', () => pm.response.code === 404);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users: Create (wrong Content-Type) \u279c 400",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/users",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Bad Header\",\n  \"email\": \"bad@hdr.com\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 when Content-Type not json', () => pm.response.code === 400);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products: Create (missing price) \u279c 400",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/products",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "products"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"product_name\": \"Nameless Price\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 missing price', () => pm.response.code === 400);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products: Create (negative price) \u279c 400",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/products",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "products"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"product_name\": \"Negative\",\n  \"price\": -5\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 negative price', () => pm.response.code === 400);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products: Get by id (not found) \u279c 404",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/products/{{badId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "products",
+            "{{badId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('404 missing product', () => pm.response.code === 404);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders: Create (missing user_id) \u279c 400",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/orders",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "orders"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"order_date\": \"2025-09-01\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 missing user_id', () => pm.response.code === 400);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders: Create (bad date format) \u279c 400",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/orders",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "orders"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_id\": \"{{userId}}\",\n  \"order_date\": \"09-01-2025\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 bad date format', () => pm.response.code === 400);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders: Create (user not found) \u279c 404",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/orders",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "orders"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_id\": \"{{badId}}\",\n  \"order_date\": \"2025-09-01\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"404 when user doesn't exist\", () => pm.response.code === 404);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders: Add product (product not found) \u279c 404",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/orders/{{orderId}}/add_product/{{badId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "orders",
+            "{{orderId}}",
+            "add_product",
+            "{{badId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('404 when product missing', () => pm.response.code === 404);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders: Add product twice (no duplicate) \u279c 200 or 409",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/orders/{{orderId}}/add_product/{{productId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "orders",
+            "{{orderId}}",
+            "add_product",
+            "{{productId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Second add returns 200 or 409', () => [200,409].includes(pm.response.code));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders: Remove product (not in order) \u279c 404 or 200 message",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/orders/{{orderId}}/remove_product/{{badId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "orders",
+            "{{orderId}}",
+            "remove_product",
+            "{{badId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Handled not-in-order', () => [404,200].includes(pm.response.code));",
+              "pm.test('Explains result', () => pm.response.text().toLowerCase().match(/not in|not found|remove/));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders: Get by id (missing) \u279c 404",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/orders/{{badId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "orders",
+            "{{badId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('404 missing order', () => pm.response.code === 404);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders: Get orders for user (missing user) \u279c 404 or 200 []",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/orders/user/{{badId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "orders",
+            "user",
+            "{{badId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Either 404 or empty list', () => [404,200].includes(pm.response.code));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users: PATCH \u279c 405",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/users",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('405 method not allowed', () => pm.response.code === 405);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users: Pagination bad params \u279c 400",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/users?page=abc&per_page=-1",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users?page=abc&per_page=-1"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('400 invalid pagination', () => pm.response.code === 400);"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

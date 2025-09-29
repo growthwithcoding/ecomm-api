@@ -1,219 +1,169 @@
-# 🛒 E-commerce API (Flask + SQLAlchemy + Marshmallow + MySQL)
+# 🛒 E-Commerce API with Flask, SQLAlchemy, Marshmallow & MySQL
 
-> Because who *doesn’t* want to spin up a mini-Amazon in their terminal?
+[![Author](https://img.shields.io/badge/author-growthwithcoding-blue)](https://github.com/growthwithcoding)
+![Flask](https://img.shields.io/badge/Flask-3.x-lightgrey)
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.x-red)
+![Marshmallow](https://img.shields.io/badge/Marshmallow-3.x-blue)
+![MySQL](https://img.shields.io/badge/MySQL-9.x-yellow)
 
----
-
-## 🚀 Overview
-
-Welcome to my **Relational Databases & REST API Project**!  
-This bad boy is built with **Flask**, **Flask-SQLAlchemy**, **Flask-Marshmallow**, and **MySQL**.  
-
-Here’s what it does (besides making you look like a backend wizard 🧙‍♂️):
-
-- Manages **Users**, **Orders**, and **Products**.  
-- Handles **relationships** like a pro:  
-  - One **User** → Many **Orders**  
-  - Many **Orders** ↔ Many **Products** (via an association table that refuses duplicate products in the same order).  
-- Uses **Marshmallow Schemas** for validation + serialization.  
-- Gives you **CRUD endpoints** for Users & Products, plus all the juicy Order operations.  
-- Stores everything in a **MySQL database** (not SQLite — we’re doing this the grown-up way).  
+This repository implements the **Relational Databases & REST API Development Project**.  
+It delivers a fully functional **E-Commerce API** with proper relational models, Marshmallow validation, and Postman test collections (positive + negative).
 
 ---
 
-## 🎯 Learning Objectives (a.k.a. Why This Exists)
+## 📌 Overview
+- **Framework**: Flask  
+- **ORM**: SQLAlchemy  
+- **Serialization & Validation**: Marshmallow  
+- **Database**: MySQL  
+- **Testing**: Postman Collections (positive & negative flows) + MySQL Workbench
 
-✔️ **Database Design** – Build relational models with SQLAlchemy + MySQL  
-✔️ **API Development** – REST endpoints that don’t make you cry  
-✔️ **Serialization** – Marshmallow makes your JSON pretty *and* safe  
-✔️ **Testing** – Postman + MySQL Workbench to prove it actually works  
-
----
-
-## 🗂 Database Models
-
-### 👤 User
-- `id` → Integer, primary key, auto-increment  
-- `name` → String  
-- `address` → String  
-- `email` → **Unique** String  
-
-### 📦 Product
-- `id` → Integer, primary key, auto-increment  
-- `product_name` → String  
-- `price` → Float (≥ 0)  
-
-### 🧾 Order
-- `id` → Integer, primary key, auto-increment  
-- `order_date` → DateTime (required on create)  
-- `user_id` → FK → `users.id`  
-
-### 🔗 OrderProduct (association table)
-- `order_id` → FK → `orders.id`  
-- `product_id` → FK → `products.id`  
-- Composite PK on (`order_id`, `product_id`) → no duplicates, sorry hoarders  
+The API manages **Users, Orders, and Products**, with:
+- One-to-Many: One User → Many Orders  
+- Many-to-Many: Orders ↔ Products (via association table with composite PK to prevent duplicates)
 
 ---
 
-## 🧩 Relationships
+## 🗂 Project Structure
 
-- **User → Orders** (1 to ∞)  
-- **Order ↔ Products** (∞ to ∞ via `order_product`)  
-- Cascade delete on `User → Orders` so you don’t end up with ghost orders 👻  
-
----
-
-## 📦 Schemas (Marshmallow Magic)
-
-- **UserSchema**: name, email (must contain `@`), address.  
-- **ProductSchema**: product_name, price (≥ 0).  
-- **OrderSchema**: includes `user_id` (yep, `include_fk=True`) and nests products on dump.  
-
-Validation included. No more “email: pizza” disasters. 🍕  
-
----
-
-## 🔧 Endpoints
-
-### Health / Setup
-- `GET /` → sanity check (`{"status":"ok"}` if not on fire)  
-- `POST /init-db` → create tables  
-  - ⚠️ **Dev only**! If Flask isn’t in debug, send header: `X-Init-Token: <INIT_DB_TOKEN>`  
-
-### 👤 User Endpoints
-- `GET /users?page=1&per_page=20` → list users (with pagination metadata)  
-- `GET /users/<id>` → get user by ID  
-- `POST /users` → create user (`{name, email, address}`)  
-- `PUT /users/<id>` → update user  
-- `DELETE /users/<id>` → delete user (bye + cascade orders)  
-
-### 📦 Product Endpoints
-- `GET /products?page=1&per_page=20` → list products (with pagination metadata)  
-- `GET /products/<id>` → get product by ID  
-- `POST /products` → create product (`{product_name, price}`)  
-- `PUT /products/<id>` → update product  
-- `DELETE /products/<id>` → delete product  
-
-### 🧾 Order Endpoints
-- `POST /orders` → create order (`{user_id, order_date}`)  
-- `GET /orders/<id>` → get single order (products embedded) — returns JSON 404 `"Order not found"` if missing  
-- `PUT /orders/<order_id>/add_product/<product_id>` → add product to order (no duplicates)  
-- `DELETE /orders/<order_id>/remove_product/<product_id>` → remove product from order  
-- `DELETE /orders/<order_id>` → delete entire order (returns `{ "message": "Order deleted" }`)  
-- `GET /orders/user/<user_id>` → get all orders for a user  
-- `GET /orders/<order_id>/products` → get products in a specific order  
-
----
-
-## 🛠️ Setup Guide
-
-### 1) Clone the repo
-```bash
-git clone <your-repo-url>
-cd ecommerce-api
+```
+ecomm-api/
+├─ app.py                     # main Flask app with models, schemas, endpoints
+├─ requirements.txt           # Python dependencies
+├─ .env                       # DB credentials & config (local only)
+├─ postman/
+│  ├─ Ecommerce-API-Environment.postman_environment.json
+│  ├─ Ecommerce-API-Positive.postman_collection.json
+│  └─ Ecommerce-API-Negative.postman_collection.json
+└─ README.md
 ```
 
-### 2) Create a virtual environment
-```bash
+---
+
+## 🗃 Database Models
+
+**User**
+- `id` (PK, auto)
+- `name` (str)
+- `address` (str)
+- `email` (unique str)
+
+**Order**
+- `id` (PK, auto)
+- `order_date` (DateTime, ISO required)
+- `user_id` (FK → User.id)
+
+**Product**
+- `id` (PK, auto)
+- `product_name` (str)
+- `price` (float, non-negative)
+
+**Order_Product** *(association)*
+- `order_id` (FK → Order.id)
+- `product_id` (FK → Product.id)
+- **Composite PK** to prevent duplicate product per order
+
+---
+
+## 📦 Marshmallow Schemas
+- **UserSchema**  
+- **OrderSchema** (with `include_fk=True` so `user_id` is included)  
+- **ProductSchema** (validates `price >= 0`)  
+
+---
+
+## 🚀 Endpoints
+
+### Users
+- `GET /users` → all users (paginated)  
+- `GET /users/<id>` → single user  
+- `POST /users` → create (unique email enforced)  
+- `PUT /users/<id>` → update  
+- `DELETE /users/<id>` → delete  
+
+### Products
+- `GET /products`  
+- `GET /products/<id>`  
+- `POST /products`  
+- `PUT /products/<id>`  
+- `DELETE /products/<id>`  
+
+### Orders
+- `POST /orders` → create new order (`user_id`, `order_date`)  
+- `PUT /orders/<order_id>/add_product/<product_id>` → add product (no duplicates)  
+- `DELETE /orders/<order_id>/remove_product/<product_id>` → remove product  
+- `GET /orders/<order_id>/products` → list products in an order  
+- `GET /orders/user/<user_id>` → list all orders for a user  
+
+### Bonus
+- `GET /orders/<id>/total` → order total  
+- `GET /orders/user/<user_id>/summary` → order count + totals  
+
+---
+
+## 🧪 Testing
+
+### ✅ Positive Tests
+Located in `postman/Ecommerce-API-Positive.postman_collection.json`.  
+Covers the **happy path**: creating a user, product, order, adding/removing products, and querying relations.
+
+### ❌ Negative Tests
+Located in `postman/Ecommerce-API-Negative.postman_collection.json`.  
+Covers **error paths**: missing fields, duplicate email, bad date format, invalid IDs, wrong content-type, duplicate adds, etc.
+
+### Environment
+`postman/Ecommerce-API-Environment.postman_environment.json` defines:
+- `baseUrl` (default `http://127.0.0.1:5000`)  
+- `initDbToken` (set to `dev-init-ok`)  
+- variables for `userId`, `productId`, `orderId`, `uniqueName`, `uniqueEmail`, `isoDate`  
+
+### Workflow
+1. Run **Positive collection** top-to-bottom.  
+2. Run **Negative collection** to verify error handling.  
+3. Confirm in **MySQL Workbench** that the DB is populated correctly.  
+
+---
+
+## ⚙️ Setup
+
+```powershell
+# create venv
 python -m venv venv
-venv\Scripts\activate   # Windows
-# source venv/bin/activate  # Mac/Linux
-```
+.venv\Scripts\Activate.ps1
 
-### 3) Install dependencies
-```bash
+# install deps
 pip install -r requirements.txt
-```
 
-### 4) Configure `.env`
-```ini
-DB_USER=ecom_api_user
-DB_PASS=Password123!
-DB_HOST=127.0.0.1
-DB_NAME=ecommerce_api
-# Optional: protect /init-db outside debug mode
-INIT_DB_TOKEN=dev-init-ok
-```
+# set env (Windows PowerShell)
+$env:FLASK_APP="app.py"
+$env:FLASK_ENV="development"
+$env:SQLALCHEMY_DATABASE_URI="mysql+mysqlconnector://root:<PASSWORD>@127.0.0.1:3306/ecommerce_api"
 
-### 5) Make MySQL start on boot (Windows)
-- Open **services.msc** → find **MySQL93** → **Properties** → set **Startup type: Automatic** → **Start**.  
-- Verify **Running** in MySQL Workbench.
-
-### 6) Run the app
-```bash
-set FLASK_APP=app.py
-flask run
-```
-👉 Visit [http://localhost:5000](http://localhost:5000) and you should see:
-```json
-{"status":"ok"}
+# run API
+python .app.py
 ```
 
 ---
 
-## 🧪 Testing (Postman)
-
-### Import the provided files
-- **Collection:** `postman/Ecommerce-API.postman_collection.json`  
-- **Environment:** `postman/Ecommerce-API-Environment.postman_environment.json`  
-- Select the **ecomm-api** environment.
-
-### Run order
-1. **Setup: Reset Vars** (clears `userId`, `productId`, `orderId` and seeds a unique email)  
-2. Health Check  
-3. Init DB  
-4. Create User  
-5. Create Product  
-6. Create Order  
-7. Add Product to Order  
-8. Get Products for Order  
-9. Remove Product from Order  
-10. Get Order by ID  
-11. Get Orders for User  
-12. Delete Order (clears `orderId` so reruns don’t point at a ghost)
-
-### Reruns without headaches
-- The collection generates a **unique email** on each run, so `POST /users` won’t 409.  
-- `Setup: Reset Vars` clears IDs before each run.  
-- `Delete Order` automatically clears `orderId` after success.
+## 📊 Presentation Checklist
+- Show DB tables exist in Workbench (`user`, `order`, `product`, `order_product`).  
+- Run **Positive collection** (user → product → order → add product → remove → query).  
+- Run **Negative collection** (missing email, bad date, duplicate, 404s).  
+- Point out **JSON error handlers** keep responses consistent.  
+- Mention **pagination** in `/users` and `/products`.  
 
 ---
 
-## 🧯 Error Semantics (what your API returns)
-
-- `400 Bad Request` — validation errors (e.g., missing `order_date`, negative `price`).  
-- `404 Not Found` — resource id doesn’t exist (JSON: `{ "error": "..." }`).  
-- `409 Conflict` — unique/constraint violation (e.g., duplicate `email`). Use a new email or rely on the collection’s unique pre-script.
-
----
-
-## 💻 Sample cURL (quick smoke)
-
-```bash
-curl -s http://localhost:5000/
-curl -s -X POST http://localhost:5000/users -H "Content-Type: application/json" -d '{"name":"Ada","email":"ada@example.com","address":"London"}'
-curl -s -X POST http://localhost:5000/products -H "Content-Type: application/json" -d '{"product_name":"Keyboard","price":99.99}'
-curl -s -X POST http://localhost:5000/orders -H "Content-Type: application/json" -d '{"user_id":1,"order_date":"2025-09-06"}'
-curl -s -X PUT http://localhost:5000/orders/1/add_product/1
-curl -s http://localhost:5000/orders/1/products
-```
+## 🧾 Assessment Criteria
+- **Database Models** (30%) – relationships set up correctly  
+- **API Functionality** (40%) – endpoints work (CRUD, associations)  
+- **Serialization & Validation** (20%) – Marshmallow schemas & validation  
+- **Code Quality** (10%) – clean, organized code with comments  
 
 ---
 
-## 👩‍💻 Author
-
-**Austin Carlson**  
-Coding Temple Software Engineering Bootcamp Student  
-
-*(Yes, I built an API instead of online shopping. Proud?)* 🎉  
-
----
-
-## 📚 Works Cited
-
-- [Flask Documentation](https://flask.palletsprojects.com/) — the microframework that makes Python web dev actually fun  
-- [Flask-SQLAlchemy](https://flask-sqlalchemy.palletsprojects.com/) — ORM magic, but for Flask  
-- [Marshmallow](https://marshmallow.readthedocs.io/) — turns messy Python objects into beautiful JSON  
-- [marshmallow-sqlalchemy](https://marshmallow-sqlalchemy.readthedocs.io/) — because we’re lazy and don’t want to write boilerplate schemas  
-- [MySQL Connector/Python](https://dev.mysql.com/doc/connector-python/en/) — the DB bridge holding it all together  
-- [python-dotenv](https://pypi.org/project/python-dotenv/) — secrets management for people who don’t hardcode passwords 😉
+## 📚 Resources
+- [Flask Docs](https://flask.palletsprojects.com/)  
+- [Flask-SQLAlchemy Docs](https://flask-sqlalchemy.palletsprojects.com/)  
+- [Marshmallow Docs](https://marshmallow.readthedocs.io/)  
+- [MySQL Connector Docs](https://dev.mysql.com/doc/connector-python/en/)  

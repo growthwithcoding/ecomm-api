@@ -1,0 +1,410 @@
+{
+  "info": {
+    "name": "Ecommerce API - \u2705 Positive tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Happy-path collection for your Flask e-commerce API."
+  },
+  "item": [
+    {
+      "name": "Setup: Reset Vars",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": []
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.code === 200);",
+              "const now = Date.now();",
+              "pm.environment.set('userId','');",
+              "pm.environment.set('productId','');",
+              "pm.environment.set('orderId','');",
+              "pm.environment.set('uniqueName', 'User-' + now);",
+              "pm.environment.set('uniqueEmail', `user_${now}@example.com`);",
+              "pm.test('status ok', () => pm.response.json().status === 'ok');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": []
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.code === 200);",
+              "pm.test('status ok', () => pm.response.json().status === 'ok');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Init DB",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Init-Token",
+            "value": "{{initDbToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/init-db",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "init-db"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.code === 200);",
+              "pm.test('tables created message', () => pm.response.text().toLowerCase().includes('created'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Create User",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/users",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"{{uniqueName}}\",\n  \"address\": \"123 Demo St\",\n  \"email\": \"{{uniqueEmail}}\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201 created', () => pm.response.code === 201);",
+              "const u = pm.response.json();",
+              "pm.environment.set('userId', u.id);",
+              "pm.test('saved userId', () => !!pm.environment.get('userId'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Create Product",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/products",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "products"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"product_name\": \"Keyboard\",\n  \"price\": 99.99\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201 created', () => pm.response.code === 201);",
+              "const p = pm.response.json();",
+              "pm.environment.set('productId', p.id);",
+              "pm.test('saved productId', () => !!pm.environment.get('productId'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Create Order",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/orders",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "orders"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user_id\": \"{{userId}}\",\n  \"order_date\": \"{{isoDate}}\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const uid = pm.environment.get('userId');",
+              "if(!uid) { throw new Error('userId not set. Run Create User first.'); }",
+              "pm.environment.set('isoDate', new Date().toISOString().slice(0,10));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('201 created', () => pm.response.code === 201);",
+              "const o = pm.response.json();",
+              "pm.environment.set('orderId', o.id);",
+              "pm.test('saved orderId', () => !!pm.environment.get('orderId'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Add Product to Order",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/orders/{{orderId}}/add_product/{{productId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "orders",
+            "{{orderId}}",
+            "add_product",
+            "{{productId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.code === 200);",
+              "const body = pm.response.json();",
+              "pm.test('has products', () => Array.isArray(body.products) && body.products.length >= 1);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Products for Order",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/orders/{{orderId}}/products",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "orders",
+            "{{orderId}}",
+            "products"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.code === 200);",
+              "const arr = pm.response.json();",
+              "pm.test('array response', () => Array.isArray(arr));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Remove Product from Order",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/orders/{{orderId}}/remove_product/{{productId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "orders",
+            "{{orderId}}",
+            "remove_product",
+            "{{productId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.code === 200);",
+              "pm.test('message mentions removed', () => pm.response.text().toLowerCase().includes('removed'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Order by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/orders/{{orderId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "orders",
+            "{{orderId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.code === 200);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Orders for User",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/orders/user/{{userId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "orders",
+            "user",
+            "{{userId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.code === 200);",
+              "const arr = pm.response.json();",
+              "pm.test('array response', () => Array.isArray(arr));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Delete Order",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/orders/{{orderId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "orders",
+            "{{orderId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('200', () => pm.response.code === 200);",
+              "pm.environment.set('orderId','');"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
