@@ -124,6 +124,42 @@ Covers **error paths**: missing fields, duplicate email, bad date format, invali
 
 ---
 
+
+
+## 🗄️ Set Up MySQL Database
+
+1. **Open MySQL Workbench** (or use the MySQL CLI).
+2. **Create the database**:
+   ```sql
+   CREATE DATABASE ecommerce_api;
+   ```
+3. **(Optional) Create a dedicated user** for this project instead of using `root`:
+   ```sql
+   CREATE USER 'ecomm_user'@'localhost' IDENTIFIED BY 'StrongPassword123!';
+   GRANT ALL PRIVILEGES ON ecommerce_api.* TO 'ecomm_user'@'localhost';
+   FLUSH PRIVILEGES;
+   ```
+4. **Verify connection** in Workbench or via CLI:
+   ```sql
+   USE ecommerce_api;
+   SHOW TABLES;
+   ```
+   (At first run, it will be empty. Tables are created when the API runs `/init-db`.)
+5. **Update your environment**:  
+   In PowerShell (Windows):
+   ```powershell
+   $env:SQLALCHEMY_DATABASE_URI="mysql+mysqlconnector://ecomm_user:StrongPassword123!@127.0.0.1:3306/ecommerce_api"
+   ```
+   Or keep using `root` if you prefer:
+   ```powershell
+   $env:SQLALCHEMY_DATABASE_URI="mysql+mysqlconnector://root:<PASSWORD>@127.0.0.1:3306/ecommerce_api"
+   ```
+6. **Initialize tables**:  
+   Run the Postman request `Init DB` (with header `X-Init-Token: dev-init-ok`) to build all schema tables automatically.
+
+✅ Now your database is ready and tied into the Flask API.
+
+
 ## ⚙️ Setup
 
 ```powershell
